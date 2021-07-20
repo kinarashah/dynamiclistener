@@ -314,7 +314,9 @@ func (l *listener) updateCert(cn ...string) error {
 		return err
 	}
 
+	logrus.Infof("Kinara updateCert calling NeedsUpdate")
 	if !factory.IsStatic(secret) && !factory.NeedsUpdate(l.maxSANs, secret, cn...) {
+		logrus.Infof( "Kinara RETURNING NIL! !IsStatic and NeedsUpdate is False!")
 		return nil
 	}
 
@@ -323,6 +325,7 @@ func (l *listener) updateCert(cn ...string) error {
 	defer l.RLock()
 	defer l.Unlock()
 
+	logrus.Infof("Kinara Calling AddCN()!")
 	secret, updated, err := l.factory.AddCN(secret, append(l.sans, cn...)...)
 	if err != nil {
 		return err

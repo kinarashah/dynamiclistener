@@ -96,6 +96,7 @@ func NewSignedCert(signer crypto.Signer, caCert *x509.Certificate, caKey crypto.
 		},
 	}
 
+	logrus.Infof("NewSignedCert %v CN %s", domains, cn)
 	cert, err := x509.CreateCertificate(rand.Reader, &parent, caCert, signer.Public(), caKey)
 	if err != nil {
 		return nil, err

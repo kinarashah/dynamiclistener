@@ -81,6 +81,8 @@ func (t *TLS) Merge(target, additional *v1.Secret) (*v1.Secret, bool, error) {
 			updated = true
 		}
 	}
+
+	logrus.Infof("Kinara Merge returning updated %v", updated)
 	return secret, updated, err
 }
 
@@ -116,10 +118,13 @@ func (t *TLS) AddCN(secret *v1.Secret, cn ...string) (*v1.Secret, bool, error) {
 	if IsStatic(secret) || !NeedsUpdate(0, secret, cn...) {
 		return secret, false, nil
 	}
+
+	logrus.Infof("Kinara AddCN calling generateCert")
 	return t.generateCert(secret, cn...)
 }
 
 func (t *TLS) generateCert(secret *v1.Secret, cn ...string) (*v1.Secret, bool, error) {
+	logrus.Infof("Kinara entered generateCert! %s", cn)
 	secret = secret.DeepCopy()
 	if secret == nil {
 		secret = &v1.Secret{}
@@ -194,15 +199,21 @@ func NeedsUpdate(maxSANs int, secret *v1.Secret, cn ...string) bool {
 		return true
 	}
 
+	logrus.Infof("Kinara secret.Annotations %#v", secret.Annotations)
+
 	for _, cn := range cn {
 		if secret.Annotations[cnPrefix+cn] == "" {
+			logrus.Infof("Kinara Annotation %s, maxSANs %v, len(cns(secret)) %v", cnPrefix+cn, maxSANs, len(cns(secret)))
 			if maxSANs > 0 && len(cns(secret)) >= maxSANs {
 				return false
 			}
 			return true
+		} else {
+			logrus.Infof("Kinara Annotation as expected %s", cnPrefix+cn, secret.Annotations[cnPrefix+cn])
 		}
 	}
 
+	logrus.Infof("Kinara returning False!")
 	return false
 }
 

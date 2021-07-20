@@ -131,6 +131,7 @@ func (s *storage) saveInK8s(secret *v1.Secret) (*v1.Secret, error) {
 	}
 
 	if existing, err := s.storage.Get(); err == nil && s.tls != nil {
+		logrus.Infof("Kinara saveinK8s existing calling Merge()")
 		if newSecret, updated, err := s.tls.Merge(existing, secret); err == nil && updated {
 			secret = newSecret
 		}
@@ -140,10 +141,11 @@ func (s *storage) saveInK8s(secret *v1.Secret) (*v1.Secret, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	logrus.Info("Kinara saveInKs8s calling Merge() :/")
 	if newSecret, updated, err := s.tls.Merge(targetSecret, secret); err != nil {
 		return nil, err
 	} else if !updated {
+		logrus.Infof("Kinara TLS Merge() returning FALSE")
 		return newSecret, nil
 	} else {
 		secret = newSecret
@@ -154,10 +156,10 @@ func (s *storage) saveInK8s(secret *v1.Secret) (*v1.Secret, error) {
 	targetSecret.Data = secret.Data
 
 	if targetSecret.UID == "" {
-		logrus.Infof("Creating new TLS secret for %v (count: %d): %v", targetSecret.Name, len(targetSecret.Annotations)-1, targetSecret.Annotations)
+		logrus.Infof("Kinara Creating new TLS secret for %v (count: %d): %v", targetSecret.Name, len(targetSecret.Annotations)-1, targetSecret.Annotations)
 		return s.secrets.Create(targetSecret)
 	}
-	logrus.Infof("Updating TLS secret for %v (count: %d): %v", targetSecret.Name, len(targetSecret.Annotations)-1, targetSecret.Annotations)
+	logrus.Infof("Kinara Updating TLS secret for %v (count: %d): %v", targetSecret.Name, len(targetSecret.Annotations)-1, targetSecret.Annotations)
 	return s.secrets.Update(targetSecret)
 }
 
@@ -166,6 +168,7 @@ func (s *storage) Update(secret *v1.Secret) (err error) {
 	defer s.Unlock()
 
 	for i := 0; i < 3; i++ {
+		logrus.Infof("Kinara Calling saveInK8s()")
 		secret, err = s.saveInK8s(secret)
 		if errors.IsConflict(err) {
 			continue

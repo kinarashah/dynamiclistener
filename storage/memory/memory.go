@@ -34,12 +34,13 @@ func (m *memory) Get() (*v1.Secret, error) {
 func (m *memory) Update(secret *v1.Secret) error {
 	if m.secret == nil || m.secret.ResourceVersion == "" || m.secret.ResourceVersion != secret.ResourceVersion {
 		if m.storage != nil {
+			logrus.Infof("Kinara Calling storage Update(secret)! %s", secret.Name, secret.Namespace)
 			if err := m.storage.Update(secret); err != nil {
 				return err
 			}
 		}
 
-		logrus.Infof("Active TLS secret %s (ver=%s) (count %d): %v", secret.Name, secret.ResourceVersion, len(secret.Annotations)-1, secret.Annotations)
+		logrus.Infof("Kinara Active TLS secret %s (ver=%s) (count %d): %v", secret.Name, secret.ResourceVersion, len(secret.Annotations)-1, secret.Annotations)
 		m.secret = secret
 	}
 	return nil

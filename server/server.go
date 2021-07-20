@@ -45,6 +45,7 @@ func ListenAndServe(ctx context.Context, httpsPort, httpPort int, handler http.H
 		opts.TLSListenerConfig.TLSConfig = &tls.Config{}
 	}
 
+	logrus.Infof("TLS ops %v %v %v %v", opts.CA, opts.CAKey, opts.CAName, opts.CANamespace)
 	logger := logrus.StandardLogger()
 	errorLog := log.New(logger.WriterLevel(logrus.DebugLevel), "", log.LstdFlags)
 
@@ -160,7 +161,7 @@ func getCA(opts ListenOpts) (*x509.Certificate, crypto.Signer, error) {
 	if opts.CANamespace == "" {
 		opts.CANamespace = "kube-system"
 	}
-
+	logrus.Infof("Loading GenCA for %s %s", opts.CAName, opts.CANamespace)
 	return kubernetes.LoadOrGenCA(opts.Secrets, opts.CANamespace, opts.CAName)
 }
 
@@ -199,7 +200,7 @@ func acmeListener(tcp net.Listener, handler http.Handler, opts ListenOpts) (net.
 	for _, domain := range opts.AcmeDomains {
 		hosts[domain] = true
 	}
-
+	logrus.Infof("acmeListener %v", hosts)
 	manager := autocert.Manager{
 		Cache: autocert.DirCache("certs-cache"),
 		Prompt: func(tosURL string) bool {
@@ -214,6 +215,7 @@ func acmeListener(tcp net.Listener, handler http.Handler, opts ListenOpts) (net.
 	}
 
 	opts.TLSListenerConfig.TLSConfig.GetCertificate = func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+		logrus.Infof("getting certificate")
 		if hello.ServerName == "localhost" || hello.ServerName == "" {
 			newHello := *hello
 			newHello.ServerName = opts.AcmeDomains[0]
